@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:38:07 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/23 14:45:04 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/06/23 15:20:49 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 
 static t_error	*get_lasterr(void)
 {
-	static t_error	lasterr = {ERR_OK};
+	static __thread t_error	lasterr = {ERR_OK};
 
 	return (&lasterr);
 }

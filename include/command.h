@@ -1,33 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   error.h                                            :+:      :+:    :+:   */
+/*   command.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/23 11:38:01 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/25 14:33:06 by taegokim         ###   ########.fr       */
+/*   Created: 2026/06/23 11:47:19 by taegokim          #+#    #+#             */
+/*   Updated: 2026/06/25 14:30:57 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef ERROR_H
-# define ERROR_H
+#ifndef COMMAND_H
+# define COMMAND_H
 
 # include "types.h"
+# include "error.h"
 
-typedef enum e_error
-{
-	ERR_OK,
-	ERR_MALLOC_FAILED,
-}		t_error;
-
-// typedef struct s_error
-// {
-// 	enum e_error_type	err;
-// }	t_error;
-
-t_error	get_error(void);
-t_error	set_error(t_error err);
-void	print_error(void);
-
+t_error					command_init(t_command *this);
 #endif

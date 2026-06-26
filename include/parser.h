@@ -1,26 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   cmd.h                                              :+:      :+:    :+:   */
+/*   parser.h                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/23 11:47:19 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/23 12:40:11 by taegokim         ###   ########.fr       */
+/*   Created: 2026/06/25 10:36:15 by taegokim          #+#    #+#             */
+/*   Updated: 2026/06/25 10:38:06 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CMD_H
-# define CMD_H
+#ifndef PARSER_H
+# define PARSER_H
 
-# include "types.h"
 # include "error.h"
 
-typedef struct s_cmd
-{
-	t_error				(*run)(t_cmd * this);
-	void				(*destroy)(t_cmd *this);
-}						t_cmd;
+t_error	parser_init(t_parser *this, int argc, char **argv);
 
-t_error					cmd_init(t_cmd *this);
 #endif

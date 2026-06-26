@@ -1,31 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   cmd.c                                              :+:      :+:    :+:   */
+/*   command.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:48:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/23 12:44:34 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/06/25 14:55:18 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd.h"
+#include "command.h"
 
-t_error	cmd_run_impl(t_cmd *this)
+t_error	command_run_impl(t_command *this)
 {
 	(void) this;
 	return (ERR_OK);
 }
 
-void	cmd_destroy_impl(t_cmd *this)
+void	command_destroy_impl(t_command *this)
 {
 	(void) this;
 }
 
-t_error	cmd_init(t_cmd *this)
+t_error	command_init(t_command *this)
 {
-	this->run = cmd_run_impl;
-	this->destroy = cmd_destroy_impl;
+	this->run = command_run_impl;
+	this->destroy = command_destroy_impl;
 	return (ERR_OK);
 }
