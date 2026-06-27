@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 12:38:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/25 15:56:20 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/06/27 15:53:40 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,20 +50,22 @@ typedef struct s_parse_result
 
 typedef struct s_parser
 {
+	t_parse_result			parsed;
+
 	int						argc;
 	char					**argv;
 
-	t_error					(*parse)(t_parser *this, t_parse_result *ret);
+	t_error					(*parse)(t_parser *this);
 	void					(*destroy)(t_parser *this);
 }							t_parser;
 
 typedef struct s_pipe_mgr
 {
 	int						pipe_num;
-	int				(*pipes)[2];
+	int (*pipes)[2];
 
 	void					(*connect)(t_pipe_mgr *this, int from_fd,
-			int to_fd);
+							int to_fd);
 	void					(*close_other_pipes)(t_pipe_mgr *this);
 	void					(*destroy)(t_pipe_mgr *this);
 }							t_pipe_mgr;
@@ -110,7 +112,7 @@ typedef struct s_app
 	t_pipe_mgr				pipe_mgr;
 	t_parser				parser;
 
-	t_error					(*run)(t_app * this);
+	t_error					(*run)(t_app *this);
 	void					(*destroy)(t_app *this);
 }							t_app;
 
