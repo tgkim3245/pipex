@@ -3,7 +3,8 @@ NAME	= pipex
 SRCS	= main.c \
 		  src/app.c \
 		  src/command.c \
-		  src/error.c
+		  src/error.c \
+		  src/parser.c
 
 OBJS = $(SRCS:.c=.o)
 

@@ -6,19 +6,23 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 12:38:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/27 15:53:40 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/06/29 10:39:11 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef TYPES_H
 # define TYPES_H
 
-typedef struct s_command	t_command;
-typedef enum e_error		t_error;
-typedef struct s_app		t_app;
-typedef struct s_parser		t_parser;
-typedef struct s_pipe		t_pipe;
-typedef struct s_file_mgr	t_file_mgr;
+typedef struct s_command		t_command;
+typedef enum e_error			t_error;
+typedef struct s_app			t_app;
+typedef struct s_parser			t_parser;
+typedef struct s_pipe			t_pipe;
+typedef struct s_file_mgr		t_file_mgr;
+typedef struct s_pipe_mgr		t_pipe_mgr;
+typedef struct s_command_mgr	t_command_mgr;
+typedef struct s_reader			t_reader;
+typedef struct s_writer			t_writer;
 
 /*
 ./pipex file1 cmd1 cmd2 file2
@@ -50,8 +54,7 @@ typedef struct s_parse_result
 
 typedef struct s_parser
 {
-	t_parse_result			parsed;
-
+	t_parse_result			result;
 	int						argc;
 	char					**argv;
 
@@ -62,10 +65,10 @@ typedef struct s_parser
 typedef struct s_pipe_mgr
 {
 	int						pipe_num;
-	int (*pipes)[2];
+	int 					(*pipes)[2];
 
 	void					(*connect)(t_pipe_mgr *this, int from_fd,
-							int to_fd);
+			int to_fd);
 	void					(*close_other_pipes)(t_pipe_mgr *this);
 	void					(*destroy)(t_pipe_mgr *this);
 }							t_pipe_mgr;
@@ -106,11 +109,9 @@ typedef struct s_writer
 
 typedef struct s_app
 {
-	char					*infile_name;
-	char					*outfile_name;
+	t_parser				*parser;
 	t_command_mgr			cmd_mgr;
 	t_pipe_mgr				pipe_mgr;
-	t_parser				parser;
 
 	t_error					(*run)(t_app *this);
 	void					(*destroy)(t_app *this);

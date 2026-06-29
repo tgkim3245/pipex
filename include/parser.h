@@ -15,6 +15,6 @@
 
 # include "error.h"
 
-t_error	parser_init(t_parser *this, int argc, char **argv);
+t_parser	*parser_create(int argc, char **argv);
 
 #endif
