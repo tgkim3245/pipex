@@ -12,11 +12,11 @@
 
 #include "app.h"
 
-int	main(int argc, char **argv)
+int	main(int argc, char **argv, char **envp)
 {
 	t_app	app;
 
-	if (app_init(&app, argc, argv) != ERR_OK)
+	if (app_init(&app, argc, argv, envp) != ERR_OK)
 		return (print_error(), app.destroy(&app), 1);
 	if (app.run(&app) != ERR_OK)
 		return (print_error(), app.destroy(&app), 1);

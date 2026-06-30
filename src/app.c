@@ -6,44 +6,50 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:40:07 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/29 00:00:00 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/06/30 12:54:40 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "app.h"
-#include "error.h"
-#include "parser.h"
 #include <stdlib.h>
 
 static t_error	app_run_impl(t_app *this)
 {
 	(void)this;
-	// cmd 갯수만큼 파이프 만들고, fork
 	return (set_error(ERR_OK));
 }
 
 static void	app_destroy_impl(t_app *this)
 {
-	if (this->parser)
-		this->parser->destroy(this->parser);
+	this->cmd_mgr.destroy(&this->cmd_mgr);
+	this->pipe_mgr.destroy(&this->pipe_mgr);
+	this->reader.destroy(&this->reader);
+	this->writer.destroy(&this->writer);
 }
 
-t_error	app_init(t_app *this, int argc, char **argv)
+t_error	app_init(t_app *this, int argc, char **argv, char **envp)
 {
-	t_parse_result	*result;
+	t_parse_result	parsed;
+	t_parser		*parser;
 
 	this->run = app_run_impl;
 	this->destroy = app_destroy_impl;
-	this->parser = parser_create(argc, argv);
-	if (!this->parser)
+	parser = parser_create(argc, argv);
+	if (!parser)
 		return (get_error());
-	if (this->parser->parse(this->parser) != ERR_OK)
+	if (parser->parse(parser, &parsed) != ERR_OK)
+		return (parser->destroy(parser), get_error());
+	parser->destroy(parser);
+	if (pipe_mgr_init(&this->pipe_mgr, parsed.pipe_num) != ERR_OK)
 		return (get_error());
-	result = &this->parser->result;
-	if (pipe_mgr_init(&this->pipe_mgr, result->pipe_num) != ERR_OK)
+	if (command_mgr_init(&this->cmd_mgr, parsed.command_num,
+			parsed.commands, envp) != ERR_OK)
 		return (get_error());
-	if (command_mgr_init(&this->cmd_mgr, result->command_num,
-			result->commands) != ERR_OK)
+	if (reader_init(&this->reader, parsed.input_type,
+			parsed.input[parsed.input_type]) != ERR_OK)
+		return (get_error());
+	if (writer_init(&this->writer, parsed.outfile_name,
+			parsed.input_type == TYPE_HEREDOC) != ERR_OK)
 		return (get_error());
 	return (set_error(ERR_OK));
 }

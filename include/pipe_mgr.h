@@ -1,33 +1,29 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   command.c                                          :+:      :+:    :+:   */
+/*   pipe_mgr.h                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/23 11:48:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/25 14:55:18 by taegokim         ###   ########.fr       */
+/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
+/*   Updated: 2026/06/30 00:00:00 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "command.h"
+#ifndef PIPE_MGR_H
+# define PIPE_MGR_H
 
-t_error	command_run_impl(t_command *this, int in_fd, int out_fd)
-{
-	(void)this;
-	(void)in_fd;
-	(void)out_fd;
-	return (ERR_OK);
-}
+# include "error.h"
 
-void	command_destroy_impl(t_command *this)
+struct s_pipe_mgr
 {
-	(void) this;
-}
+	int		pipe_num;
+	int		(*pipes)[2];
+	void	(*connect)(t_pipe_mgr *this, int from_fd, int to_fd);
+	void	(*close_other_pipes)(t_pipe_mgr *this);
+	void	(*destroy)(t_pipe_mgr *this);
+};
 
-t_error	command_init(t_command *this)
-{
-	this->run = command_run_impl;
-	this->destroy = command_destroy_impl;
-	return (ERR_OK);
-}
+t_error	pipe_mgr_init(t_pipe_mgr *this, int pipe_num);
+
+#endif
