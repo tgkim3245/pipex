@@ -1,30 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipe_mgr.h                                         :+:      :+:    :+:   */
+/*   ft_lstclear.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:00:44 by taegokim         ###   ########.fr       */
+/*   Created: 2026/04/18 15:53:01 by taegokim          #+#    #+#             */
+/*   Updated: 2026/04/18 16:42:13 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPE_MGR_H
-# define PIPE_MGR_H
+#include "libft.h"
 
-# include "error.h"
-
-struct s_pipe_mgr
+void	ft_lstclear(t_list **lst, void (*del)(void *))
 {
-	int		pipe_num;
-	int		(*pipes)[2];
+	t_list	*temp;
 
-	void	(*connect)(t_pipe_mgr *this, int from_fd, int to_fd);
-	void	(*close_other_pipes)(t_pipe_mgr *this);
-	void	(*destroy)(t_pipe_mgr *this);
-};
-
-t_error	pipe_mgr_init(t_pipe_mgr *this, int pipe_num);
-
-#endif
+	if (!lst || !del)
+		return ;
+	while (*lst != NULL)
+	{
+		temp = (*lst)->next;
+		ft_lstdelone(*lst, del);
+		*lst = temp;
+	}
+}

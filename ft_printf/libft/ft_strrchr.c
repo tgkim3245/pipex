@@ -1,30 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipe_mgr.h                                         :+:      :+:    :+:   */
+/*   ft_strrchr.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:00:44 by taegokim         ###   ########.fr       */
+/*   Created: 2026/04/13 17:56:36 by taegokim          #+#    #+#             */
+/*   Updated: 2026/04/23 17:21:06 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPE_MGR_H
-# define PIPE_MGR_H
+#include "libft.h"
 
-# include "error.h"
-
-struct s_pipe_mgr
+char	*ft_strrchr(const char *s, int c)
 {
-	int		pipe_num;
-	int		(*pipes)[2];
+	char	*p;
+	char	*ret;
 
-	void	(*connect)(t_pipe_mgr *this, int from_fd, int to_fd);
-	void	(*close_other_pipes)(t_pipe_mgr *this);
-	void	(*destroy)(t_pipe_mgr *this);
-};
-
-t_error	pipe_mgr_init(t_pipe_mgr *this, int pipe_num);
-
-#endif
+	p = (char *)s;
+	ret = NULL;
+	while (1)
+	{
+		if (*p == (unsigned char)c)
+			ret = p;
+		if (*p == '\0')
+			break ;
+		p++;
+	}
+	return (ret);
+}

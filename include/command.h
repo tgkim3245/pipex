@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:47:19 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/30 00:00:00 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/04 21:24:42 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,7 @@
 
 # include "error.h"
 
-/*
-** minishell 확장 시 redirections 필드를 여기에 추가
-*/
+
 struct s_command
 {
 	char	**args;

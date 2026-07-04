@@ -1,30 +1,37 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipe_mgr.h                                         :+:      :+:    :+:   */
+/*   ft_strchr.c                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:00:44 by taegokim         ###   ########.fr       */
+/*   Created: 2026/04/13 17:13:17 by taegokim          #+#    #+#             */
+/*   Updated: 2026/04/23 17:20:25 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPE_MGR_H
-# define PIPE_MGR_H
+#include "libft.h"
 
-# include "error.h"
-
-struct s_pipe_mgr
+/*
+- Searches for the first occurrence of c in the string.
+- It can also search for the terminating '\0' character.
+- Returns NULL if c is not found.
+*/
+char	*ft_strchr(const char *s, int c)
 {
-	int		pipe_num;
-	int		(*pipes)[2];
+	char	*p;
 
-	void	(*connect)(t_pipe_mgr *this, int from_fd, int to_fd);
-	void	(*close_other_pipes)(t_pipe_mgr *this);
-	void	(*destroy)(t_pipe_mgr *this);
-};
-
-t_error	pipe_mgr_init(t_pipe_mgr *this, int pipe_num);
-
-#endif
+	p = (char *)s;
+	while (1)
+	{
+		if (*p == (unsigned char)c)
+			break ;
+		else if (*p == '\0')
+		{
+			p = NULL;
+			break ;
+		}
+		p++;
+	}
+	return (p);
+}

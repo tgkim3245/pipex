@@ -1,30 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipe_mgr.h                                         :+:      :+:    :+:   */
+/*   ft_strnstr.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:00:44 by taegokim         ###   ########.fr       */
+/*   Created: 2026/04/14 16:54:18 by taegokim          #+#    #+#             */
+/*   Updated: 2026/04/23 17:21:03 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPE_MGR_H
-# define PIPE_MGR_H
+#include "libft.h"
 
-# include "error.h"
-
-struct s_pipe_mgr
+char	*ft_strnstr(const char *big, const char *little, size_t len)
 {
-	int		pipe_num;
-	int		(*pipes)[2];
+	size_t	i;
+	size_t	j;
 
-	void	(*connect)(t_pipe_mgr *this, int from_fd, int to_fd);
-	void	(*close_other_pipes)(t_pipe_mgr *this);
-	void	(*destroy)(t_pipe_mgr *this);
-};
-
-t_error	pipe_mgr_init(t_pipe_mgr *this, int pipe_num);
-
-#endif
+	if (little[0] == '\0')
+		return ((char *)big);
+	i = 0;
+	while (big[i] != '\0' && i < len)
+	{
+		j = 0;
+		while (big[i + j] != '\0' && i + j < len && little[j] == big[i + j])
+		{
+			if (little[j + 1] == '\0')
+				return ((char *)(big + i));
+			j++;
+		}
+		i++;
+	}
+	return (NULL);
+}

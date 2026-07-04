@@ -1,30 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipe_mgr.h                                         :+:      :+:    :+:   */
+/*   ft_isascii.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:00:44 by taegokim         ###   ########.fr       */
+/*   Created: 2026/04/09 17:40:53 by taegokim          #+#    #+#             */
+/*   Updated: 2026/04/23 17:19:20 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPE_MGR_H
-# define PIPE_MGR_H
+#include "libft.h"
 
-# include "error.h"
-
-struct s_pipe_mgr
+int	ft_isascii(int c)
 {
-	int		pipe_num;
-	int		(*pipes)[2];
-
-	void	(*connect)(t_pipe_mgr *this, int from_fd, int to_fd);
-	void	(*close_other_pipes)(t_pipe_mgr *this);
-	void	(*destroy)(t_pipe_mgr *this);
-};
-
-t_error	pipe_mgr_init(t_pipe_mgr *this, int pipe_num);
-
-#endif
+	if (0 <= c && c <= 127)
+		return (1);
+	else
+		return (0);
+}

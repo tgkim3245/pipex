@@ -1,30 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipe_mgr.h                                         :+:      :+:    :+:   */
+/*   ft_strmapi.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:00:44 by taegokim         ###   ########.fr       */
+/*   Created: 2026/04/18 13:58:38 by taegokim          #+#    #+#             */
+/*   Updated: 2026/04/18 14:06:39 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPE_MGR_H
-# define PIPE_MGR_H
+#include "libft.h"
 
-# include "error.h"
-
-struct s_pipe_mgr
+char	*ft_strmapi(char const *s, char (*f)(unsigned int, char))
 {
-	int		pipe_num;
-	int		(*pipes)[2];
+	size_t	s_len;
+	size_t	i;
+	char	*p;
 
-	void	(*connect)(t_pipe_mgr *this, int from_fd, int to_fd);
-	void	(*close_other_pipes)(t_pipe_mgr *this);
-	void	(*destroy)(t_pipe_mgr *this);
-};
-
-t_error	pipe_mgr_init(t_pipe_mgr *this, int pipe_num);
-
-#endif
+	if (!s || !f)
+		return (NULL);
+	s_len = ft_strlen(s);
+	p = (char *)malloc(s_len + 1);
+	if (!p)
+		return (NULL);
+	i = 0;
+	while (i < s_len)
+	{
+		p[i] = f(i, s[i]);
+		i++;
+	}
+	p[s_len] = '\0';
+	return (p);
+}
