@@ -1,38 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   command.h                                          :+:      :+:    :+:   */
+/*   cmd_mgr.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:47:19 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:24:42 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/05 16:49:12 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef COMMAND_H
-# define COMMAND_H
+#ifndef CMD_MGR_H
+# define CMD_MGR_H
 
 # include "error.h"
+# include "pipe_mgr.h"
+# include "cmd.h"
 
-
-struct s_command
-{
-	char	**args;
-	char	**envp;
-	t_error	(*run)(t_command *this, int in_fd, int out_fd);
-	void	(*destroy)(t_command *this);
-};
-
-struct s_command_mgr
+struct			s_cmd_mgr
 {
 	int			command_num;
-	t_command	*commands;
-	void		(*destroy)(t_command_mgr *this);
+	t_cmd		*commands;
+
+	t_pipe_mgr	*pm;
+
+	t_cmd 		*cmd_create(char *cmd_str, char **envp, int fd_in, int fd_out);
+	void		(*destroy)(t_cmd_mgr *this);
 };
 
-t_command	*command_create(char *cmd_str, char **envp);
-t_error		command_mgr_init(t_command_mgr *this, int command_num,
-				char **raw_commands, char **envp);
+t_status			cmd_mgr_init(t_cmd_mgr *this, t_parse_result parsed,
+					t_pipe_mgr _pm, char **envp);
 
-#endif
+#endif // CMD_MGR_H

@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/25 10:36:15 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 20:58:16 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/05 16:46:50 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,6 @@ struct s_parser
 	void	(*destroy)(t_parser *this);
 };
 
-t_parser	*parser_create(int argc, char **argv);
+t_status	*parser_create(int argc, char **argv);
 
 #endif

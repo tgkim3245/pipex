@@ -1,33 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   command.c                                          :+:      :+:    :+:   */
+/*   cmd_mgr.c                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:48:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/25 14:55:18 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/05 16:50:57 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "command.h"
+#include "cmd_mgr.h"
 
-t_error	command_run_impl(t_command *this, int in_fd, int out_fd)
+t_status	cmd_run_impl(t_cmd *this)
 {
 	(void)this;
-	(void)in_fd;
-	(void)out_fd;
-	return (ERR_OK);
+	return (OK);
 }
 
-void	command_destroy_impl(t_command *this)
+void	cmd_destroy_impl(t_cmd *this)
 {
-	(void) this;
+	(void)this;
 }
 
-t_error	command_init(t_command *this)
+t_cmd	*cmd_create(char *cmd_str, char **envp, int fd_in, int fd_out)
 {
-	this->run = command_run_impl;
-	this->destroy = command_destroy_impl;
+}
+
+t_status	cmd_mgr_init(t_cmd_mgr *this, t_parse_result parsed, t_pipe_mgr _pm,
+		char **envp)
+{
+	this->destroy = cmd_destroy_impl;
 	return (ERR_OK);
 }

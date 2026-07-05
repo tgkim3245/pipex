@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/30 00:00:00 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/05 16:46:41 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,6 @@ struct s_reader
 	void	(*destroy)(t_reader *this);
 };
 
-t_error	reader_init(t_reader *this, t_input_type type, char *input);
+t_status	reader_init(t_reader *this, t_input_type type, char *input);
 
 #endif

@@ -1,32 +1,36 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   app.h                                              :+:      :+:    :+:   */
+/*   cmd.h                                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/23 10:12:03 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/05 16:49:22 by taegokim         ###   ########.fr       */
+/*   Created: 2026/07/05 13:31:46 by taegokim          #+#    #+#             */
+/*   Updated: 2026/07/05 16:49:37 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef APP_H
-# define APP_H
+#ifndef CMD_H
+# define CMD_H
 
-# include "cmd_mgr.h"
-# include "pipe_mgr.h"
 # include "reader.h"
 # include "writer.h"
+# include "error.h"
 
-struct s_app
+struct			s_cmd
 {
-	t_cmd_mgr		cmd_mgr;
-	t_pipe_mgr		pipe_mgr;
+	t_reader	reader;
+	t_writer	writer;
 
-	t_status		(*run)(t_app * this);
-	void			(*destroy)(t_app *this);
+	char		*path;
+	char		**argv;
+	char		**envp;
+
+	t_status	(*run)(t_cmd * this);
+	void		(*destroy)(t_cmd *this);
 };
 
-t_status	app_init(t_app *this, int argc, char **argv, char **envp);
+t_status	cmd_init(t_cmd this, char *cmd_str, char **envp, int fd_in, int fd_out);
 
-#endif
+
+#endif // CMD_H

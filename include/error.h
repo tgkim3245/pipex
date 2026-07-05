@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:38:01 by taegokim          #+#    #+#             */
-/*   Updated: 2026/06/30 00:00:00 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/05 16:48:20 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,14 +17,11 @@
 
 typedef enum e_error
 {
-	ERR_OK,
-	ERR_MALLOC_FAILED,
+	ERR_SYSCALL,
 	ERR_CREATE_PARSER_FAILED,
 	ERR_INVALID_ARGS,
-}	t_error;
+}		t_error;
 
-t_error	get_error(void);
-t_error	set_error(t_error err);
-void	print_error(void);
+t_status	report_error(char *err_title, t_error err_type);
 
 #endif

@@ -6,16 +6,13 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/04 21:01:14 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/04 21:22:07 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/05 12:13:14 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipe_mgr.h"
 #include <unistd.h>
 
-void	connect_impl(t_pipe_mgr *this, int from_fd, int to_fd)
-{
-}
 
 void	close_other_pipes_impl(t_pipe_mgr *this)
 {
@@ -30,7 +27,6 @@ t_error	pipe_mgr_init(t_pipe_mgr *this, int _pipe_num)
 {
 	int	i;
 
-	this->connect = connect_impl;
 	this->close_other_pipes = close_other_pipes_impl;
 	this->destroy = destroy_impl;
 	this->pipe_num = _pipe_num;
