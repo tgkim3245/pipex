@@ -1,27 +1,33 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   reader.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/23 10:16:46 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 10:07:24 by taegokim         ###   ########.fr       */
+/*   Created: 2026/07/06 17:33:24 by taegokim          #+#    #+#             */
+/*   Updated: 2026/07/06 18:28:17 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "app.h"
-#include "libft.h"
+#include "reader.h"
+#include <unistd.h>
 
-int	main(int argc, char **argv, char **envp)
+static char	read_impl(t_reader *this)
 {
-	t_app	app;
+	dup2(this->fd_in, STDIN_FILENO);
+	close(this->fd_in);
+}
 
-	ft_memset(&app, 0, sizeof(t_app));
-	if (app_init(&app, argc, argv, envp) != OK)
-		return (app.destroy(&app), 1);
-	if (app.run(&app) != OK)
-		return (app.destroy(&app), 1);
-	app.destroy(&app);
-	return (0);
+static void	destroy_impl(t_reader *this)
+{
+}
+
+t_status	reader_init(t_reader *this, int fd[2])
+{
+	this->read = read_impl;
+	this->destroy = destroy_impl;
+	this->fd_in = fd[0];
+	this->fd_out = fd[1];
+	return (OK);
 }

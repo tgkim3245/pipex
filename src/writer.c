@@ -1,27 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   writer.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/23 10:16:46 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 10:07:24 by taegokim         ###   ########.fr       */
+/*   Created: 2026/07/06 17:34:57 by taegokim          #+#    #+#             */
+/*   Updated: 2026/07/06 17:36:19 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "app.h"
-#include "libft.h"
+#include "writer.h"
 
-int	main(int argc, char **argv, char **envp)
+static char	write_impl(t_writer *this)
 {
-	t_app	app;
+}
 
-	ft_memset(&app, 0, sizeof(t_app));
-	if (app_init(&app, argc, argv, envp) != OK)
-		return (app.destroy(&app), 1);
-	if (app.run(&app) != OK)
-		return (app.destroy(&app), 1);
-	app.destroy(&app);
-	return (0);
+static void	destroy_impl(t_writer *this)
+{
+}
+
+t_status	writer_init(t_writer *this)
+{
+	return (OK);
 }

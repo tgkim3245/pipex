@@ -6,27 +6,63 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 13:31:16 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/05 16:23:40 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/06 18:00:09 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "parser.h"
 #include "cmd.h"
+#include "libft.h"
+#include <stdlib.h>
 #include <unistd.h>
 #include "error.h"
+#include "util.h"
 
-static t_error	run_impl(t_cmd *this)
+static t_status	run_impl(t_cmd *this)
 {
-	execve(this->path, this->argv, this->envp);
-	print_error("execve failed", ERR_SYSCALL);
-	exit(1);
+	this->pid = fork();
+	if (this->pid < 0)
+		return (report_error("fork failed", ERR_SYSCALL));
+	else if (this->pid == 0)
+	{
+		dup2(this->fd_in, STDIN_FILENO);
+		close(this->fd_in);
+		dup2(this->fd_out, STDOUT_FILENO);
+		close(this->fd_out);
+		this->pm->close_all_pipes(this->pm);
+		execve(this->path, this->argv, this->envp);
+		report_error("execve failed", ERR_SYSCALL);
+		_exit(1);
+	}
+	else
+		return (OK);
 }
 
 static void	destroy_impl(t_cmd *this)
 {
+	int	i;
+
+	free(this->path);
+	i = -1;
+	while (this->argv[++i])
+		free(this->argv[i]);
+	free(this->argv);
 }
 
-t_error	cmd_init(t_cmd this, char *cmd_str, char **envp, int fd_in, int fd_out)
+t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
+					t_pipe_mgr *_pm, char **_envp)
 {
 	this->run = run_impl;
 	this->destroy = destroy_impl;
+	this->pm = _pm;
+	this->path = create_path(parsed->commands[idx][0], _envp);
+	if (!this->path)
+		return (report_error("path_create_failed", ERR_CREATE_PATH_FAILED));
+	this->argv = ft_split(parsed->commands[idx], ' ');
+	if (!this->argv)
+		return (report_error("argv_split_failed", ERR_ARGV_SPLIT_FAILED));
+	this->fd_in = _pm->pipes[idx][0];
+	this->fd_out = _pm->pipes[idx + 1][1];
+	this->envp = _envp;
+	return (OK);
 }

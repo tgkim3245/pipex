@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 10:12:03 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/05 16:49:22 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/06 17:33:03 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,11 +17,15 @@
 # include "pipe_mgr.h"
 # include "reader.h"
 # include "writer.h"
+# include "parser.h"
 
 struct s_app
 {
-	t_cmd_mgr		cmd_mgr;
+	t_parser		parser;
 	t_pipe_mgr		pipe_mgr;
+	t_reader		reader;
+	t_writer		writer;
+	t_cmd_mgr		cmd_mgr;
 
 	t_status		(*run)(t_app * this);
 	void			(*destroy)(t_app *this);

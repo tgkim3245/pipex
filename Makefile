@@ -1,12 +1,12 @@
 NAME	= pipex
-
 SRCS	= main.c \
 		  src/app.c \
 		  src/cmd.c \
 		  src/cmd_mgr.c \
 		  src/error.c \
-		  src/parser.c
-
+		  src/parser.c \
+		  src/pipe_mgr.c \
+		  util/create_cmd_path.c
 OBJS = $(SRCS:.c=.o)
 
 FT_PRINTF_DIR = ft_printf
@@ -26,8 +26,8 @@ HEADERS = 	$(wildcard include/*.h) \
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $@
+$(NAME): $(FT_PRINTF) $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $(LIB_DIR_FLAGS) $(LIB_FLAGS) -o $@
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

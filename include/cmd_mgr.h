@@ -6,29 +6,29 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:47:19 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/05 16:49:12 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/06 16:04:34 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CMD_MGR_H
 # define CMD_MGR_H
 
+# include "cmd.h"
 # include "error.h"
 # include "pipe_mgr.h"
-# include "cmd.h"
 
 struct			s_cmd_mgr
 {
-	int			command_num;
-	t_cmd		*commands;
+	t_cmd		*cmds;
 
+	int			cmd_num;
 	t_pipe_mgr	*pm;
 
-	t_cmd 		*cmd_create(char *cmd_str, char **envp, int fd_in, int fd_out);
+	t_status	(*run)(t_cmd_mgr * this);
 	void		(*destroy)(t_cmd_mgr *this);
 };
 
-t_status			cmd_mgr_init(t_cmd_mgr *this, t_parse_result parsed,
-					t_pipe_mgr _pm, char **envp);
+t_status	cmd_mgr_init(t_cmd_mgr *this, t_parsed *parsed, t_pipe_mgr *_pm,
+				char **envp);
 
 #endif // CMD_MGR_H
