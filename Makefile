@@ -6,7 +6,10 @@ SRCS	= main.c \
 		  src/error.c \
 		  src/parser.c \
 		  src/pipe_mgr.c \
-		  util/create_cmd_path.c
+		  util/create_cmd_path.c \
+		  util/free_split.c \
+		  get_next_line/get_next_line.c \
+		  get_next_line/get_next_line_utils.c
 OBJS = $(SRCS:.c=.o)
 
 FT_PRINTF_DIR = ft_printf
@@ -17,12 +20,13 @@ LIB_DIR_FLAGS = -L$(FT_PRINTF_DIR)
 LIB_FLAGS = -l$(FT_PRINTF_LIB)
 
 CC = cc
-INCLUDES = -Iinclude -Iutil -Ift_printf -Ift_printf/libft
+INCLUDES = -Iinclude -Iutil -Ift_printf -Ift_printf/libft -Iget_next_line
 CFLAGS = -Wall -Wextra -Werror -g
 HEADERS = 	$(wildcard include/*.h) \
 			$(wildcard util/*.h)	\
 			$(wildcard ft_printf/*.h)	\
 			$(wildcard ft_printf/libft/*.h)	\
+			$(wildcard get_next_line/*.h)	\
 
 all: $(NAME)
 

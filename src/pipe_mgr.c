@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/04 21:01:14 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 16:00:50 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/08 13:49:14 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,6 @@
 #include <unistd.h>
 
 static void	close_all_pipes_impl(t_pipe_mgr *this)
-{
-	(void)this;
-}
-
-static void	destroy_impl(t_pipe_mgr *this)
 {
 	int	i;
 
@@ -32,6 +27,11 @@ static void	destroy_impl(t_pipe_mgr *this)
 		close(this->pipes[i][0]);
 		close(this->pipes[i][1]);
 	}
+}
+
+static void	destroy_impl(t_pipe_mgr *this)
+{
+	this->close_all_pipes(this);
 	free(this->pipes);
 }
 
@@ -48,6 +48,7 @@ t_status	pipe_mgr_init(t_pipe_mgr *this, int _pipe_num)
 		return (report_error("pipe_mgr_init", ERR_SYSCALL));
 	i = -1;
 	while (++i < this->pipe_num)
-		pipe(this->pipes[i]);
+		if (pipe(this->pipes[i]) == -1)
+			return (report_error("pipe", ERR_SYSCALL));
 	return (OK);
 }

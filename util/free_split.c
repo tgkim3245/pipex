@@ -1,19 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   util.h                                             :+:      :+:    :+:   */
+/*   free_splilt.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/06 17:22:56 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 21:04:03 by taegokim         ###   ########.fr       */
+/*   Created: 2026/07/07 21:03:32 by taegokim          #+#    #+#             */
+/*   Updated: 2026/07/07 21:04:37 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef UTIL_H
-# define UTIL_H
+#include "util.h"
+#include <stdlib.h>
 
-char	*create_cmd_path(char *cmd_name, char **envp);
-void	free_split(char **split);
+void	free_split(char **split)
+{
+	int	i;
 
-#endif // UTIL_H
+	if (!split)
+		return ;
+	i = -1;
+	while (split[++i])
+		free(split[i]);
+	free(split);
+}

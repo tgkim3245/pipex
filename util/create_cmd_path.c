@@ -6,24 +6,59 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 17:19:02 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 17:26:23 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/07 21:04:33 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "cmd.h"
+#include "util.h"
+#include "libft.h"
+#include <unistd.h>
 
 static char	*get_path_env(char **envp)
 {
+	int	i;
+
+	i = -1;
+	while (envp[++i])
+		if (ft_strncmp(envp[i], "PATH=", 5) == 0)
+			return (envp[i] + 5);
+	return (NULL);
 }
 
 static char	*find_cmd_path(char *cmd, char **envp)
 {
+	char	**dirs;
+	char	*dir_slash;
+	char	*path;
+	int		i;
+
+	dirs = ft_split(get_path_env(envp), ':');
+	if (!dirs)
+		return (NULL);
+	i = -1;
+	while (dirs[++i])
+	{
+		dir_slash = ft_strjoin(dirs[i], "/");
+		path = ft_strjoin(dir_slash, cmd);
+		free(dir_slash);
+		if (path && access(path, X_OK) == 0)
+			return (free_split(dirs), path);
+		free(path);
+	}
+	free_split(dirs);
+	return (NULL);
 }
 
 char	*create_cmd_path(char *cmd_name, char **envp)
 {
 	char	*path;
 
-	
+	if (ft_strchr(cmd_name, '/'))
+	{
+		if (access(cmd_name, X_OK) == 0)
+			return (ft_strdup(cmd_name));
+		return (NULL);
+	}
+	path = find_cmd_path(cmd_name, envp);
 	return (path);
 }

@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/25 10:36:15 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 15:55:50 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/07 21:12:15 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ typedef enum e_input_type
 typedef struct s_parsed
 {
 	t_input_type	input_type;
-	char			*input[TYPE_COUNT];
+	char			*input;
 	char			*outfile_name;
 	int				command_num;
 	char			**commands;

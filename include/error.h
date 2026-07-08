@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:38:01 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 16:34:16 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/07 16:55:30 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ typedef enum e_error
 	ERR_CREATE_COMMAND_FAILED,
 	ERR_CREATE_PATH_FAILED,
 	ERR_ARGV_SPLIT_FAILED,
+	ERR_INVALID_READ_TYPE,
 }		t_error;
 
 t_status	report_error(char *err_title, t_error err_type);

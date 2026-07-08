@@ -1,19 +1,30 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   util.h                                             :+:      :+:    :+:   */
+/*   get_next_line.h                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/06 17:22:56 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 21:04:03 by taegokim         ###   ########.fr       */
+/*   Created: 2026/04/28 12:04:24 by taegokim          #+#    #+#             */
+/*   Updated: 2026/05/02 11:47:51 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef UTIL_H
-# define UTIL_H
+#ifndef GET_NEXT_LINE_H
+# define GET_NEXT_LINE_H
 
-char	*create_cmd_path(char *cmd_name, char **envp);
-void	free_split(char **split);
+# include <unistd.h>
+# include <stdlib.h>
 
-#endif // UTIL_H
+# ifndef BUFFER_SIZE
+#  define BUFFER_SIZE 42
+# endif
+
+char	*get_next_line(int fd);
+
+/* utils */
+char	*gnl_strjoin(char *s1, char *s2);
+char	*gnl_strchr(char *s, int c);
+size_t	gnl_strlen(char *s);
+
+#endif

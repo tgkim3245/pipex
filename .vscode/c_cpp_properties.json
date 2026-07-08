@@ -6,7 +6,8 @@
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/util",
                 "${workspaceFolder}/ft_printf",
-                "${workspaceFolder}/ft_printf/libft"
+                "${workspaceFolder}/ft_printf/libft",
+                "${workspaceFolder}/get_next_line"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/cc",

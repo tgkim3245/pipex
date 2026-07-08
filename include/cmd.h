@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 13:31:46 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 17:56:19 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/07 23:19:35 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,12 +17,14 @@
 # include "writer.h"
 # include "error.h"
 # include "pipe_mgr.h"
+# include <stdbool.h>
 # include <sys/types.h>
 
 struct			s_cmd
 {
 	pid_t		pid;
 	char		*path;
+	bool		found;
 	char		**argv;
 
 	int			fd_in;

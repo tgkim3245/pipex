@@ -1,41 +1,40 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   writer.c                                           :+:      :+:    :+:   */
+/*   reader_file_impl.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/06 17:34:57 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 23:15:00 by taegokim         ###   ########.fr       */
+/*   Created: 2026/07/07 22:13:05 by taegokim          #+#    #+#             */
+/*   Updated: 2026/07/07 23:15:24 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "writer.h"
 #include "error.h"
+#include "reader.h"
 #include <fcntl.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
-#define WRITE_BUF_SIZE 4096
+#define READ_BUF_SIZE 4096
 
 static t_status	copy_loop(int fd_in, int fd_out)
 {
-	char	buf[WRITE_BUF_SIZE];
+	char	buf[READ_BUF_SIZE];
 	ssize_t	n;
 
-	n = read(fd_in, buf, WRITE_BUF_SIZE);
+	n = read(fd_in, buf, READ_BUF_SIZE);
 	while (n > 0)
 	{
 		if (write(fd_out, buf, n) < 0)
 			return (report_error("write", ERR_SYSCALL));
-		n = read(fd_in, buf, WRITE_BUF_SIZE);
+		n = read(fd_in, buf, READ_BUF_SIZE);
 	}
 	if (n < 0)
 		return (report_error("read", ERR_SYSCALL));
 	return (OK);
 }
 
-static t_status	write_impl(t_writer *this)
+t_status	read_file_impl(t_reader *this)
 {
 	this->pid = fork();
 	if (this->pid < 0)
@@ -54,24 +53,15 @@ static t_status	write_impl(t_writer *this)
 	return (OK);
 }
 
-static void	destroy_impl(t_writer *this)
+int	create_file_fd_in(t_parsed *parsed)
 {
-	close(this->fd_out);
-	waitpid(this->pid, NULL, 0);
-}
+	int	fd;
 
-t_status	writer_init(t_writer *this, t_parsed *parsed, t_pipe_mgr *pm)
-{
-	this->write = write_impl;
-	this->destroy = destroy_impl;
-	this->pm = pm;
-	this->fd_in = pm->pipes[parsed->command_num][0];
-	this->fd_out = open(parsed->outfile_name, O_WRONLY | O_CREAT | O_TRUNC,
-			0644);
-	if (this->fd_out < 0)
+	fd = open(parsed->input, O_RDONLY);
+	if (fd < 0)
 	{
-		report_error(parsed->outfile_name, ERR_SYSCALL);
-		this->fd_out = open("/dev/null", O_WRONLY);
+		report_error(parsed->input, ERR_SYSCALL);
+		fd = open("/dev/null", O_RDONLY);
 	}
-	return (OK);
+	return (fd);
 }

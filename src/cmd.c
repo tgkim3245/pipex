@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 13:31:16 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/06 18:00:09 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/07 23:19:56 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,8 +31,11 @@ static t_status	run_impl(t_cmd *this)
 		close(this->fd_out);
 		this->pm->close_all_pipes(this->pm);
 		execve(this->path, this->argv, this->envp);
-		report_error("execve failed", ERR_SYSCALL);
-		_exit(1);
+		if (!this->found && !ft_strchr(this->argv[0], '/'))
+			report_error(this->argv[0], ERR_CREATE_PATH_FAILED);
+		else
+			report_error(this->argv[0], ERR_SYSCALL);
+		_exit(127);
 	}
 	else
 		return (OK);
@@ -40,13 +43,8 @@ static t_status	run_impl(t_cmd *this)
 
 static void	destroy_impl(t_cmd *this)
 {
-	int	i;
-
 	free(this->path);
-	i = -1;
-	while (this->argv[++i])
-		free(this->argv[i]);
-	free(this->argv);
+	free_split(this->argv);
 }
 
 t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
@@ -55,12 +53,13 @@ t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
 	this->run = run_impl;
 	this->destroy = destroy_impl;
 	this->pm = _pm;
-	this->path = create_path(parsed->commands[idx][0], _envp);
-	if (!this->path)
-		return (report_error("path_create_failed", ERR_CREATE_PATH_FAILED));
 	this->argv = ft_split(parsed->commands[idx], ' ');
 	if (!this->argv)
 		return (report_error("argv_split_failed", ERR_ARGV_SPLIT_FAILED));
+	this->path = create_cmd_path(this->argv[0], _envp);
+	this->found = (this->path != NULL);
+	if (!this->found)
+		this->path = ft_strdup(this->argv[0]);
 	this->fd_in = _pm->pipes[idx][0];
 	this->fd_out = _pm->pipes[idx + 1][1];
 	this->envp = _envp;
