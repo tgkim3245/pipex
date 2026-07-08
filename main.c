@@ -23,5 +23,5 @@ int	main(int argc, char **argv, char **envp)
 	if (app.run(&app) != OK)
 		return (app.destroy(&app), 1);
 	app.destroy(&app);
-	return (0);
+	return (app.cmd_mgr.exit_code);
 }

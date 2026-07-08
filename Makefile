@@ -6,6 +6,10 @@ SRCS	= main.c \
 		  src/error.c \
 		  src/parser.c \
 		  src/pipe_mgr.c \
+		  src/reader.c \
+		  src/reader_file_impl.c \
+		  src/reader_heredoc_impl.c \
+		  src/writer.c \
 		  util/create_cmd_path.c \
 		  util/free_split.c \
 		  get_next_line/get_next_line.c \

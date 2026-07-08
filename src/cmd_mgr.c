@@ -27,13 +27,31 @@ static t_status	run_impl(t_cmd_mgr *this)
 	return (OK);
 }
 
+static int	get_exit_code(int status)
+{
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	if (WIFSIGNALED(status))
+		return (128 + WTERMSIG(status));
+	return (1);
+}
+
 static void	destroy_impl(t_cmd_mgr *this)
 {
 	int	i;
+	int	status;
 
+	if (!this->cmds)
+		return ;
 	i = -1;
 	while (++i < this->cmd_num)
-		waitpid(this->cmds[i].pid, NULL, 0);
+	{
+		if (this->cmds[i].pid <= 0)
+			continue ;
+		waitpid(this->cmds[i].pid, &status, 0);
+		if (i == this->cmd_num - 1)
+			this->exit_code = get_exit_code(status);
+	}
 	i = -1;
 	while (++i < this->cmd_num)
 		if (this->cmds[i].destroy)

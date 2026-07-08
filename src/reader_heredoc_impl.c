@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 22:13:05 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 22:57:49 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/08 14:00:00 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "get_next_line.h"
 #include "libft.h"
 #include "reader.h"
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -53,24 +54,43 @@ static void	write_heredoc(int fd_out, char *limiter)
 	}
 }
 
-t_status	read_heredoc_impl(t_reader *this)
+static char	*heredoc_tmp_path(void)
 {
-	this->pid = fork();
-	if (this->pid < 0)
-		return (report_error("fork", ERR_SYSCALL));
-	if (this->pid == 0)
-	{
-		dup2(this->fd_out, STDOUT_FILENO);
-		close(this->fd_out);
-		this->pm->close_all_pipes(this->pm);
-		write_heredoc(STDOUT_FILENO, this->parsed->input);
-		_exit(0);
-	}
-	return (OK);
+	char	*pid_str;
+	char	*path;
+
+	pid_str = ft_itoa(getpid());
+	if (!pid_str)
+		return (NULL);
+	path = ft_strjoin("/tmp/.pipex_heredoc_", pid_str);
+	free(pid_str);
+	return (path);
 }
 
 int	create_heredoc_fd_in(t_parsed *parsed)
 {
-	(void)parsed;
-	return (STDIN_FILENO);
+	char	*path;
+	int		fd;
+
+	path = heredoc_tmp_path();
+	if (!path)
+		return (open("/dev/null", O_RDONLY));
+	fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0600);
+	if (fd < 0)
+	{
+		report_error(path, ERR_SYSCALL);
+		free(path);
+		return (open("/dev/null", O_RDONLY));
+	}
+	write_heredoc(fd, parsed->input);
+	close(fd);
+	fd = open(path, O_RDONLY);
+	unlink(path);
+	free(path);
+	if (fd < 0)
+	{
+		report_error("heredoc", ERR_SYSCALL);
+		return (open("/dev/null", O_RDONLY));
+	}
+	return (fd);
 }

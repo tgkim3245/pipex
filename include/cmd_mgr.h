@@ -22,6 +22,7 @@ struct			s_cmd_mgr
 	t_cmd		*cmds;
 
 	int			cmd_num;
+	int			exit_code;
 	t_pipe_mgr	*pm;
 
 	t_status	(*run)(t_cmd_mgr * this);
