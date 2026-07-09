@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/06 17:19:02 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 21:04:33 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 17:11:26 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,26 +39,26 @@ static char	*find_cmd_path(char *cmd, char **envp)
 	while (dirs[++i])
 	{
 		dir_slash = ft_strjoin(dirs[i], "/");
+		if (!dir_slash)
+			break ;
 		path = ft_strjoin(dir_slash, cmd);
 		free(dir_slash);
-		if (path && access(path, X_OK) == 0)
+		if (!path)
+			break ;
+		if (access(path, X_OK) == 0)
 			return (free_split(dirs), path);
 		free(path);
 	}
-	free_split(dirs);
-	return (NULL);
+	return (free_split(dirs), NULL);
 }
 
 char	*create_cmd_path(char *cmd_name, char **envp)
 {
-	char	*path;
-
 	if (ft_strchr(cmd_name, '/'))
 	{
 		if (access(cmd_name, X_OK) == 0)
 			return (ft_strdup(cmd_name));
 		return (NULL);
 	}
-	path = find_cmd_path(cmd_name, envp);
-	return (path);
+	return (find_cmd_path(cmd_name, envp));
 }

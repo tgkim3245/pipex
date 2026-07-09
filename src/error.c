@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:38:07 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 23:07:49 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 16:52:43 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-
 
 t_status	report_error(char *err_title, t_error err_type)
 {
@@ -26,7 +25,6 @@ t_status	report_error(char *err_title, t_error err_type)
 	[ERR_CREATE_COMMAND_FAILED] = "failed to create command",
 	[ERR_CREATE_PATH_FAILED] = "command not found",
 	[ERR_ARGV_SPLIT_FAILED] = "failed to split command arguments",
-	[ERR_INVALID_READ_TYPE] = "invalid input type",
 	};
 	const char			*msg;
 

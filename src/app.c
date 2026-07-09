@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:40:07 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 23:37:41 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 14:47:45 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ static t_status	app_run_impl(t_app *this)
 {
 	if (this->cmd_mgr.run(&this->cmd_mgr) != OK)
 		return (FAIL);
-	this->pipe_mgr.close_all_pipes(&this->pipe_mgr);
 	return (OK);
 }
 
@@ -26,10 +25,6 @@ static void	app_destroy_impl(t_app *this)
 {
 	if (this->cmd_mgr.destroy)
 		this->cmd_mgr.destroy(&this->cmd_mgr);
-	if (this->writer.destroy)
-		this->writer.destroy(&this->writer);
-	if (this->reader.destroy)
-		this->reader.destroy(&this->reader);
 	if (this->pipe_mgr.destroy)
 		this->pipe_mgr.destroy(&this->pipe_mgr);
 	if (this->parser.destroy)
@@ -44,16 +39,8 @@ t_status	app_init(t_app *this, int argc, char **argv, char **envp)
 		return (FAIL);
 	if (this->parser.parse(&this->parser) != OK)
 		return (this->parser.destroy(&this->parser), FAIL);
-	if (reader_init(&this->reader, &this->parser.parsed) != OK)
+	if (pipe_mgr_init(&this->pipe_mgr, &this->parser.parsed) != OK)
 		return (FAIL);
-	if (writer_init(&this->writer, &this->parser.parsed) != OK)
-		return (FAIL);
-	if (pipe_mgr_init(&this->pipe_mgr, this->parser.parsed.command_num
-			+ 1) != OK)
-		return (FAIL);
-	this->pipe_mgr.pipes[0][0] = this->reader.fd_in;
-	this->pipe_mgr.pipes[this->parser.parsed.command_num][1] =
-		this->writer.fd_out;
 	if (cmd_mgr_init(&this->cmd_mgr, &this->parser.parsed, &this->pipe_mgr,
 			envp) != OK)
 		return (FAIL);

@@ -6,15 +6,13 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 13:31:46 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 23:19:35 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 14:19:32 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CMD_H
 # define CMD_H
 
-# include "reader.h"
-# include "writer.h"
 # include "error.h"
 # include "pipe_mgr.h"
 # include <stdbool.h>

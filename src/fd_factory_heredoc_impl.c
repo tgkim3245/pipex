@@ -1,19 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   reader_heredoc_impl.c                              :+:      :+:    :+:   */
+/*   fd_factory_heredoc_impl.c                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/07 22:13:05 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/08 14:00:00 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 17:07:07 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "error.h"
 #include "get_next_line.h"
 #include "libft.h"
-#include "reader.h"
+#include "fd_factory.h"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -67,7 +67,7 @@ static char	*heredoc_tmp_path(void)
 	return (path);
 }
 
-int	create_heredoc_fd_in(t_parsed *parsed)
+int	create_heredoc_fd_in(t_fd_factory *this)
 {
 	char	*path;
 	int		fd;
@@ -82,14 +82,14 @@ int	create_heredoc_fd_in(t_parsed *parsed)
 		free(path);
 		return (open("/dev/null", O_RDONLY));
 	}
-	write_heredoc(fd, parsed->input);
+	write_heredoc(fd, this->input);
 	close(fd);
 	fd = open(path, O_RDONLY);
 	unlink(path);
 	free(path);
 	if (fd < 0)
 	{
-		report_error("heredoc", ERR_SYSCALL);
+		report_error("heredoc_temp_open_failed", ERR_SYSCALL);
 		return (open("/dev/null", O_RDONLY));
 	}
 	return (fd);

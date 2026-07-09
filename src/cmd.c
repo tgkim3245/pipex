@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 13:31:16 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 23:19:56 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 16:18:59 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,12 @@ t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
 	this->path = create_cmd_path(this->argv[0], _envp);
 	this->found = (this->path != NULL);
 	if (!this->found)
+	{
 		this->path = ft_strdup(this->argv[0]);
+		if (!this->path)
+			return (free_split(this->argv),
+				report_error("cmd_init", ERR_SYSCALL));
+	}
 	this->fd_in = _pm->pipes[idx][0];
 	this->fd_out = _pm->pipes[idx + 1][1];
 	this->envp = _envp;

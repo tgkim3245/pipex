@@ -1,31 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   reader.h                                           :+:      :+:    :+:   */
+/*   fd_factory.h                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/30 00:00:00 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/08 14:00:00 by taegokim         ###   ########.fr       */
+/*   Created: 2026/07/09 12:40:45 by taegokim          #+#    #+#             */
+/*   Updated: 2026/07/09 14:36:32 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef READER_H
-# define READER_H
+#ifndef FD_FACTORY_H
+# define FD_FACTORY_H
 
 # include "parser.h"
 # include "types.h"
 
-struct		s_reader
+struct				s_fd_factory
 {
-	int		fd_in;
+	t_input_type	input_type;
+	char			*input;
+	char			*outfile_name;
 
-	void	(*destroy)(t_reader *this);
+	int				(*create_fd_in)(t_fd_factory *this);
+	int				(*create_fd_out)(t_fd_factory *this);
+	void			(*destroy)(t_fd_factory *this);
 };
 
-t_status	reader_init(t_reader *this, t_parsed *parsed);
+t_status			fd_factory_init(t_fd_factory *this, t_parsed *parsed);
 
-int			create_file_fd_in(t_parsed *parsed);
-int			create_heredoc_fd_in(t_parsed *parsed);
+int					create_file_fd_in(t_fd_factory *this);
+int					create_heredoc_fd_in(t_fd_factory *this);
 
-#endif
+#endif // FD_FACTORY_H

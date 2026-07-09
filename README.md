@@ -4,13 +4,28 @@
 
 ## Table of Contents
 
-- [Description](#description)
-- [Instructions](#instructions)
-- [Architecture](#architecture)
-- [Key Design Decisions](#key-design-decisions)
-- [Bugs Found & Fixes](#bugs-found--fixes)
-- [Test Cases & Edge Cases](#test-cases--edge-cases)
-- [Resources](#resources)
+- [pipex](#pipex)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Instructions](#instructions)
+    - [빌드](#빌드)
+    - [실행](#실행)
+    - [의존성](#의존성)
+  - [Architecture](#architecture)
+    - [데이터 흐름](#데이터-흐름)
+  - [Key Design Decisions](#key-design-decisions)
+    - [1. 추상 팩토리 대신 디스패치 테이블](#1-추상-팩토리-대신-디스패치-테이블)
+    - [2. reader/writer는 별도 프로세스를 만들지 않는다](#2-readerwriter는-별도-프로세스를-만들지-않는다)
+    - [3. heredoc은 임시 파일을 거친다](#3-heredoc은-임시-파일을-거친다)
+    - [4. 에러가 나도 파이프라인은 멈추지 않는다](#4-에러가-나도-파이프라인은-멈추지-않는다)
+  - [Bugs Found \& Fixes](#bugs-found--fixes)
+  - [Test Cases \& Edge Cases](#test-cases--edge-cases)
+    - [정상 동작](#정상-동작)
+    - [bash와 동일해야 하는 에러 상황](#bash와-동일해야-하는-에러-상황)
+    - [엣지 케이스](#엣지-케이스)
+  - [Resources](#resources)
+    - [참고 자료](#참고-자료)
+    - [AI 활용 내역](#ai-활용-내역)
 
 ## Description
 
@@ -83,20 +98,23 @@ reader.fd_in ─┐
 
 ## Key Design Decisions
 
-### 1. 추상 팩토리 대신 디스패치 테이블
+### 1. 추상 팩토리 대신 심플 팩토리
 
 초기 설계는 입력 타입(FILE/HEREDOC)에 따라 동작을 바꾸기 위해 "리더 팩토리" 객체(`create_fd_in`, `create_read` 메서드를 가진 별도 구조체)를 만드는 방향이었습니다. 하지만:
 
 - 타입은 파싱 시점에 이미 확정되고, 팩토리 객체는 생성 직후 바로 소비되어 재사용되지 않음
 - 여러 호출부가 팩토리 객체 자체를 다형적으로 주고받지 않음 (Abstract Factory 패턴이 가치를 가지는 조건이 아님)
+- 케이스가 FILE/HEREDOC 단 2개뿐이라, `enum` 인덱스로 함수 포인터를 찾는 디스패치 테이블조차 불필요한 간접 계층
 
-이런 경우엔 GoF 패턴보다 **`enum` 인덱스로 함수 포인터를 바로 찾는 정적 디스패치 테이블**이 더 적합합니다.
+이런 경우엔 GoF 패턴 대신 **입력 타입을 보고 바로 분기해 알맞은 생성 함수를 호출하는 정적 함수 하나(심플 팩토리)**가 더 적합합니다.
 
 ```c
-static int (*const create_fd_in[TYPE_COUNT])(t_parsed *parsed) = {
-	[TYPE_FILE] = create_file_fd_in,
-	[TYPE_HEREDOC] = create_heredoc_fd_in,
-};
+static int	create_fd_in(t_parsed *parsed)
+{
+	if (parsed->input_type == TYPE_FILE)
+		return (create_file_fd_in(parsed));
+	return (create_heredoc_fd_in(parsed));
+}
 ```
 
 ### 2. reader/writer는 별도 프로세스를 만들지 않는다
@@ -128,7 +146,7 @@ bash는 `< nofile cmd1 | cmd2` 같은 상황에서도 `cmd2`를 정상 실행합
 
 | 증상 / 발견 경위 | 원인 | 수정 |
 |---|---|---|
-| 컴파일 자체가 안 됨 (`reader_factory.c`) | `t_reader_factory` 구조체에 없는 `fd_in` 필드 접근, `this->` 누락, 미완성 대입문 | 팩토리 구조를 걷어내고 디스패치 테이블로 재작성 |
+| 컴파일 자체가 안 됨 (`reader_factory.c`) | `t_reader_factory` 구조체에 없는 `fd_in` 필드 접근, `this->` 누락, 미완성 대입문 | 팩토리 구조를 걷어내고 심플 팩토리 함수로 재작성 |
 | `create_read` 함수 포인터 타입 불일치 | out-parameter로 함수 포인터를 넘기려면 `t_status (**)(t_reader*)`가 필요한데 시그니처가 제각각이었음 | 애초에 "함수 포인터를 만들어주는 함수"라는 설계를 폐기 |
 | `wc -l` 등 파이프라인 결과가 항상 `0` / 파일 내용이 터미널에 그대로 출력됨 | `app_run_impl`에서 `cmd_mgr.run()`(커맨드 fork + 파이프 close)이 `reader.read()`(reader fork)보다 먼저 실행되어, reader가 fork될 때는 이미 부모가 쓰기용 파이프 fd를 닫아버린 뒤라 `dup2`가 조용히 실패 | fork 순서를 "전부 fork 후에 정리"로 통일 (아래 5번 항목과 함께 최종적으로는 reader/writer가 fork 자체를 안 하는 구조로 대체) |
 | `double free or corruption` 크래시 | `parser.c`의 `parser_destroy`가 `free(this)` 호출 — `this`는 `main()`의 스택 변수 `t_app app` 안에 있는 필드라 힙 포인터가 아님. parser는 애초에 별도로 힙에 소유한 게 없음 | `free(this)` 제거, no-op destroy로 변경 |
@@ -138,7 +156,7 @@ bash는 `< nofile cmd1 | cmd2` 같은 상황에서도 `cmd2`를 정상 실행합
 | 존재하지 않는 커맨드가 있으면 파이프라인 전체가 안 돎 | `cmd_init`이 `create_cmd_path` 실패를 그 자리에서 `FAIL`로 전파 → 다른 커맨드까지 전부 fork 전에 중단 | 경로를 못 찾아도 `cmd_init`은 성공 처리하고, `argv[0]`을 그대로 넘겨 `execve()`가 자식 프로세스 안에서 실패하도록 함(127 종료) — 다른 커맨드는 정상 진행 |
 | pipex 자신의 exit code가 항상 0 | 커맨드들의 종료 상태를 `waitpid(pid, NULL, 0)`로 버림, `main()`도 무조건 `return 0` | `cmd_mgr`에서 마지막 커맨드의 상태를 `WIFEXITED`/`WEXITSTATUS`/`WIFSIGNALED`로 계산해 보관, `main()`이 이를 반환 |
 | heredoc + `ls`(stdin 안 읽는 커맨드) 조합에서 SIGPIPE로 프로세스 죽음 (valgrind로 발견) | heredoc reader 프로세스가 사용자가 타이핑하는 동안 실시간으로 파이프에 `write()`하는데, `ls`가 stdin을 안 읽고 즉시 종료해 파이프 읽기 쪽이 닫힘. `signal()`/`sigaction()`은 pipex 허용 함수 목록에 없어 SIGPIPE를 무시할 수 없음 | heredoc을 임시 파일에 전부 수집한 뒤 그 파일을 열어 쓰는 방식으로 변경, 나아가 reader/writer의 파이프 중계 프로세스 자체를 없애고 `dup2` 직결 구조로 전환 (Key Design Decisions 3, 2번 참고) |
-| `Makefile`의 `SRCS`에 `reader.c` 등 실제 사용 파일 누락 | `app.c`가 `reader_init`/`writer_init`을 호출하는데 정작 그 구현 파일들이 빌드 대상에 없었음 | `SRCS`에 누락 파일 추가, `make re`로 전체 빌드 검증 |
+
 
 ## Test Cases & Edge Cases
 

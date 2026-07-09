@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:48:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 23:36:52 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 14:49:10 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ static t_status	run_impl(t_cmd_mgr *this)
 	while (++i < this->cmd_num)
 		if (this->cmds[i].run(&this->cmds[i]) != OK)
 			return (FAIL);
+	this->pm->close_all_pipes(&this->pm);
 	return (OK);
 }
 

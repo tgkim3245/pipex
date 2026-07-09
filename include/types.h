@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 12:38:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/07 19:17:35 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/09 12:42:03 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,14 +18,15 @@ typedef struct s_parser			t_parser;
 typedef struct s_cmd			t_cmd;
 typedef struct s_cmd_mgr		t_cmd_mgr;
 typedef struct s_pipe_mgr		t_pipe_mgr;
-typedef struct s_reader			t_reader;
-typedef struct s_writer			t_writer;
+// typedef struct s_reader			t_reader;
+// typedef struct s_writer			t_writer;
+typedef struct s_fd_factory		t_fd_factory;
 typedef struct s_app			t_app;
 
 typedef enum e_status
 {
 	OK,
 	FAIL,
-}	t_status;
+}								t_status;
 
 #endif
