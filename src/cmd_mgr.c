@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/23 11:48:18 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/09 14:49:10 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/10 12:23:40 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,27 +15,6 @@
 #include "error.h"
 #include <stddef.h>
 #include <sys/wait.h> 
-
-static t_status	run_impl(t_cmd_mgr *this)
-{
-	int	i;
-
-	i = -1;
-	while (++i < this->cmd_num)
-		if (this->cmds[i].run(&this->cmds[i]) != OK)
-			return (FAIL);
-	this->pm->close_all_pipes(&this->pm);
-	return (OK);
-}
-
-static int	get_exit_code(int status)
-{
-	if (WIFEXITED(status))
-		return (WEXITSTATUS(status));
-	if (WIFSIGNALED(status))
-		return (128 + WTERMSIG(status));
-	return (1);
-}
 
 static void	destroy_impl(t_cmd_mgr *this)
 {
@@ -59,6 +38,27 @@ static void	destroy_impl(t_cmd_mgr *this)
 			this->cmds[i].destroy(&this->cmds[i]);
 	free(this->cmds);
 	this->cmds = NULL;
+}
+
+static int	get_exit_code(int status)
+{
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	if (WIFSIGNALED(status))
+		return (128 + WTERMSIG(status));
+	return (1);
+}
+
+static t_status	run_impl(t_cmd_mgr *this)
+{
+	int	i;
+
+	i = -1;
+	while (++i < this->cmd_num)
+		if (this->cmds[i].run(&this->cmds[i]) != OK)
+			return (FAIL);
+	this->pm->close_all_pipes(this->pm);
+	return (OK);
 }
 
 t_status	cmd_mgr_init(t_cmd_mgr *this, t_parsed *parsed,

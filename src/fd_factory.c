@@ -6,17 +6,15 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/09 12:40:48 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/09 13:15:41 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/10 12:20:58 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "fd_factory.h"
 #include <fcntl.h>
-// #include <unistd.h>
 
 static void	destroy_impl(t_fd_factory *this)
 {
-	// close(this->fd_in);
 	(void)this;
 }
 
