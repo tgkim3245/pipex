@@ -6,12 +6,13 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 13:31:16 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/09 16:18:59 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/11 10:14:31 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "parser.h"
 #include "cmd.h"
+#include "cmd_mgr.h"
 #include "libft.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,7 +33,7 @@ static t_status	run_impl(t_cmd *this)
 		this->pm->close_all_pipes(this->pm);
 		execve(this->path, this->argv, this->envp);
 		if (!this->found && !ft_strchr(this->argv[0], '/'))
-			report_error(this->argv[0], ERR_CREATE_PATH_FAILED);
+			report_error(this->argv[0], ERR_FIND_PATH_FAILED);
 		else
 			report_error(this->argv[0], ERR_SYSCALL);
 		_exit(127);
@@ -48,15 +49,15 @@ static void	destroy_impl(t_cmd *this)
 }
 
 t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
-					t_pipe_mgr *_pm, char **_envp)
+					t_cmd_mgr *_mgr)
 {
 	this->run = run_impl;
 	this->destroy = destroy_impl;
-	this->pm = _pm;
+	this->pm = _mgr->pm;
 	this->argv = ft_split(parsed->commands[idx], ' ');
 	if (!this->argv)
 		return (report_error("argv_split_failed", ERR_ARGV_SPLIT_FAILED));
-	this->path = create_cmd_path(this->argv[0], _envp);
+	this->path = create_cmd_path(this->argv[0], _mgr->envp);
 	this->found = (this->path != NULL);
 	if (!this->found)
 	{
@@ -65,8 +66,8 @@ t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
 			return (free_split(this->argv),
 				report_error("cmd_init", ERR_SYSCALL));
 	}
-	this->fd_in = _pm->pipes[idx][0];
-	this->fd_out = _pm->pipes[idx + 1][1];
-	this->envp = _envp;
+	this->fd_in = this->pm->pipes[idx][0];
+	this->fd_out = this->pm->pipes[idx + 1][1];
+	this->envp = _mgr->envp;
 	return (OK);
 }

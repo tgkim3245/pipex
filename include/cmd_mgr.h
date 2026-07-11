@@ -24,6 +24,7 @@ struct			s_cmd_mgr
 	int			cmd_num;
 	int			exit_code;
 	t_pipe_mgr	*pm;
+	char		**envp;
 
 	t_status	(*run)(t_cmd_mgr * this);
 	void		(*destroy)(t_cmd_mgr *this);

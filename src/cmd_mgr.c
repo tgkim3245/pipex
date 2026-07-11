@@ -16,6 +16,15 @@
 #include <stddef.h>
 #include <sys/wait.h> 
 
+static int	get_exit_code(int status)
+{
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	if (WIFSIGNALED(status))
+		return (128 + WTERMSIG(status));
+	return (1);
+}
+
 static void	destroy_impl(t_cmd_mgr *this)
 {
 	int	i;
@@ -40,15 +49,6 @@ static void	destroy_impl(t_cmd_mgr *this)
 	this->cmds = NULL;
 }
 
-static int	get_exit_code(int status)
-{
-	if (WIFEXITED(status))
-		return (WEXITSTATUS(status));
-	if (WIFSIGNALED(status))
-		return (128 + WTERMSIG(status));
-	return (1);
-}
-
 static t_status	run_impl(t_cmd_mgr *this)
 {
 	int	i;
@@ -70,12 +70,13 @@ t_status	cmd_mgr_init(t_cmd_mgr *this, t_parsed *parsed,
 	this->destroy = destroy_impl;
 	this->cmd_num = parsed->command_num;
 	this->pm = _pm;
+	this->envp = _envp;
 	this->cmds = ft_calloc(this->cmd_num, sizeof(t_cmd));
 	if (!this->cmds)
 		report_error("cmd_mgr_init", ERR_SYSCALL);
 	i = -1;
 	while (++i < this->cmd_num)
-		if (cmd_init(&this->cmds[i], i, parsed, _pm, _envp) != OK)
+		if (cmd_init(&this->cmds[i], i, parsed, this) != OK)
 			return (FAIL);
 	return (OK);
 }

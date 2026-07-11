@@ -35,6 +35,6 @@ struct			s_cmd
 };
 
 t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
-				t_pipe_mgr *_pm, char **_envp);
+				t_cmd_mgr *_mgr);
 
 #endif // CMD_H
