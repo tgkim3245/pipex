@@ -6,7 +6,7 @@
 /*   By: taegokim <taegokim@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/05 13:31:16 by taegokim          #+#    #+#             */
-/*   Updated: 2026/07/11 10:14:31 by taegokim         ###   ########.fr       */
+/*   Updated: 2026/07/11 13:32:25 by taegokim         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,8 @@ t_status	cmd_init(t_cmd *this, int idx, const t_parsed *parsed,
 	this->argv = ft_split(parsed->commands[idx], ' ');
 	if (!this->argv)
 		return (report_error("argv_split_failed", ERR_ARGV_SPLIT_FAILED));
+	if (!this->argv[0])
+		return (free_split(this->argv), report_error("", ERR_FIND_PATH_FAILED));
 	this->path = create_cmd_path(this->argv[0], _mgr->envp);
 	this->found = (this->path != NULL);
 	if (!this->found)
