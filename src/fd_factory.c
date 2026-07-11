@@ -28,8 +28,12 @@ static int	create_fd_in_impl(t_fd_factory *this)
 static int	create_fd_out_impl(t_fd_factory *this)
 {
 	int	fd_out;
+	int	flags;
 
-	fd_out = open(this->outfile_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	flags = O_WRONLY | O_CREAT | O_TRUNC;
+	if (this->input_type == TYPE_HEREDOC)
+		flags = O_WRONLY | O_CREAT | O_APPEND;
+	fd_out = open(this->outfile_name, flags, 0644);
 	if (fd_out < 0)
 	{
 		report_error(this->outfile_name, ERR_SYSCALL);

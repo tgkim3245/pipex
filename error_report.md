@@ -62,7 +62,7 @@ $ echo $?
 
 ---
 
-## 4. heredoc 모드에서 outfile을 append가 아니라 truncate로 열고 있음 (테스트 #28)
+## 4. [FIXED] heredoc 모드에서 outfile을 append가 아니라 truncate로 열고 있음 (테스트 #28)
 
 ```
 TEST 28: ./pipex "here_doc" "EOF" "cat -e" "cat -e" "outfiles/outfile"
@@ -71,7 +71,7 @@ cat -e << EOF | cat -e >> outfiles/outfile_tester
 tester가 비교에 사용하는 원본 명령이 `>>`(append)인 반면, 우리 출력은 outfile에 기존 내용이 없는 상태(=truncate)로 나옴.
 
 - 원인: [src/fd_factory.c:24-32](src/fd_factory.c#L24-L32) `create_fd_out_impl`은 `this->input_type`(TYPE_FILE / TYPE_HEREDOC)을 전혀 확인하지 않고 항상 `O_TRUNC`로 연다.
-- pipex bonus 스펙(및 이 테스터)의 관례: `here_doc` 모드에서는 outfile을 `>>`(append, `O_APPEND`)로 열어야 하고, 일반 파일 입력 모드에서만 `>`(truncate)를 사용해야 함. 이 분기가 코드에 없음.
+- heredoc(입력)과 append(출력)는 논리적으로 무관한 개념이지만, 이 테스터는 비교 기준 명령을 만들 때 `here_doc` 모드면 항상 `>>`, 일반 파일 입력 모드면 항상 `>`를 쓰도록 하드코딩되어 있음 ([42_pipex_tester/test.sh:39-50](42_pipex_tester/test.sh#L39-L50), 특히 44번째 줄과 50번째 줄). 즉 "heredoc이니까 append여야 한다"는 의미론적 근거가 아니라, 이 테스터(및 원본 42 보너스 서브젝트 예시)가 임의로 그렇게 짝지어 놓은 관례임. `pipex`가 이 테스터를 통과하려면 `input_type`에 따라 분기해서 이 관례를 그대로 맞춰줘야 함.
 
 ---
 
