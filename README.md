@@ -14,10 +14,11 @@
   - [Architecture](#architecture)
     - [데이터 흐름](#데이터-흐름)
   - [Key Design Decisions](#key-design-decisions)
-    - [1. 추상 팩토리 대신 디스패치 테이블](#1-추상-팩토리-대신-디스패치-테이블)
-    - [2. reader/writer는 별도 프로세스를 만들지 않는다](#2-readerwriter는-별도-프로세스를-만들지-않는다)
+    - [1. 추상 팩토리 대신 심플 팩토리](#1-추상-팩토리-대신-심플-팩토리)
+    - [2. 입출력 fd 준비는 별도 프로세스를 만들지 않는다](#2-입출력-fd-준비는-별도-프로세스를-만들지-않는다)
     - [3. heredoc은 임시 파일을 거친다](#3-heredoc은-임시-파일을-거친다)
-    - [4. 에러가 나도 파이프라인은 멈추지 않는다](#4-에러가-나도-파이프라인은-멈추지-않는다)
+    - [4. 자원 준비 실패는 그 커맨드만 죽인다 (파이프라인 전체는 안 멈춘다)](#4-자원-준비-실패는-그-커맨드만-죽인다-파이프라인-전체는-안-멈춘다)
+    - [5. fork 이후 자식의 미해제 힙은 의도적으로 정리하지 않는다](#5-fork-이후-자식의-미해제-힙은-의도적으로-정리하지-않는다)
   - [Bugs Found \& Fixes](#bugs-found--fixes)
   - [Test Cases \& Edge Cases](#test-cases--edge-cases)
     - [정상 동작](#정상-동작)
@@ -79,22 +80,21 @@ make fclean # 바이너리 + 오브젝트 + 서브모듈(ft_printf, libft) 정�
 | 모듈 | 역할 |
 |---|---|
 | `parser` | argv를 파싱해 `t_parsed`(입력 타입, infile/limiter, outfile, 커맨드 목록)로 변환 |
-| `reader` | 첫 커맨드의 표준 입력이 될 fd를 준비 (FILE: `open()`, HEREDOC: 임시 파일에 수집) |
-| `writer` | 마지막 커맨드의 표준 출력이 될 outfile fd를 준비 |
-| `pipe_mgr` | 커맨드 사이를 잇는 파이프들을 생성/보관/일괄 정리 |
+| `fd_factory` | 입력 타입(FILE/HEREDOC)에 따라 첫 커맨드의 stdin fd(`create_fd_in`)와 마지막 커맨드의 stdout(outfile) fd(`create_fd_out`)를 생성. `pipe_mgr`가 소유 |
+| `pipe_mgr` | 커맨드 사이를 잇는 파이프들을 생성/보관/일괄 정리. 양 끝 슬롯만 `fd_factory`가 만든 fd로 채움 |
 | `cmd` / `cmd_mgr` | 커맨드 하나하나를 fork + execve로 실행, PATH에서 실행 파일 경로 탐색 |
 | `app` | 위 모듈들을 초기화 순서대로 엮고 실행/정리하는 최상위 오케스트레이터 |
 
 ### 데이터 흐름
 
 ```
-reader.fd_in ─┐
-              ├─▶ cmd[0] ─(pipe)─▶ cmd[1] ─(pipe)─▶ ... ─▶ cmd[N-1] ─┐
-              │                                                       ├─▶ writer.fd_out
-   (dup2)     └───────────────────────────────────────────────(dup2)─┘
+fd_factory.create_fd_in() ─┐
+                            ├─▶ cmd[0] ─(pipe)─▶ cmd[1] ─(pipe)─▶ ... ─▶ cmd[N-1] ─┐
+                (dup2)      │                                                       ├─▶ fd_factory.create_fd_out()
+                            └───────────────────────────────────────────────(dup2)─┘
 ```
 
-`reader`/`writer`는 프로세스를 만들지 않고 **fd만 준비**하며, 그 fd는 `pipe_mgr`가 관리하는 파이프 배열의 양 끝 슬롯에 그대로 꽂혀서 `cmd[0]`/`cmd[N-1]`이 `dup2`로 직접 사용합니다. (아래 "Key Design Decisions" 참고)
+`fd_factory`는 프로세스를 만들지 않고 **fd만 준비**하며, 그 fd는 `pipe_mgr`가 관리하는 파이프 배열의 양 끝 슬롯(`pipes[0][0]`, `pipes[pipe_num-1][1]`)에 그대로 꽂혀서 `cmd[0]`/`cmd[N-1]`이 `dup2`로 직접 사용합니다. (아래 "Key Design Decisions" 참고)
 
 ## Key Design Decisions
 
@@ -117,28 +117,40 @@ static int	create_fd_in(t_parsed *parsed)
 }
 ```
 
-### 2. reader/writer는 별도 프로세스를 만들지 않는다
+### 2. 입출력 fd 준비는 별도 프로세스를 만들지 않는다
 
-처음엔 `reader`/`writer`도 각자 fork해서 `read()`/`write()` 루프로 데이터를 파이프에 중계하는 방식이었습니다. 이 방식은 두 가지 문제가 있었습니다.
+처음엔 입력/출력 준비도 각각 fork해서 `read()`/`write()` 루프로 데이터를 파이프에 중계하는 별도 프로세스(`reader`/`writer`)로 만드는 방식이었습니다. 이 방식은 두 가지 문제가 있었습니다.
 
 - FILE 입력 하나를 옮기려고 불필요한 프로세스를 하나 더 fork함
 - (아래 SIGPIPE 버그 참고) 중계 프로세스가 파이프에 `write()`하는 도중 다운스트림 커맨드가 stdin을 안 읽고 먼저 종료해버리면 크래시
 
-그래서 최종적으로는 **`reader_init`/`writer_init`이 fd만 준비**해두고, 그 fd를 `cmd[0]`/마지막 `cmd`가 **직접 `dup2`** 해서 쓰는 구조로 바꿨습니다. 중계 프로세스 자체가 없으니 이 클래스의 버그가 원천적으로 발생하지 않습니다.
+그래서 최종적으로는 지금의 `fd_factory_init`처럼 **fd만 준비**해두고, 그 fd를 `cmd[0]`/마지막 `cmd`가 **직접 `dup2`** 해서 쓰는 구조로 바꿨습니다. 중계 프로세스 자체가 없으니 이 클래스의 버그가 원천적으로 발생하지 않습니다.
 
-이때 `pipe_mgr`의 파이프 배열 인덱싱(`pipes[idx][0]`/`pipes[idx+1][1]`)은 그대로 두고, 양 끝 슬롯의 "실제로 쓰이는 반쪽"만 진짜 `pipe()` 대신 reader/writer가 준비한 fd로 채워 넣었습니다. 안 쓰는 반쪽은 `-1` 센티널로 표시해 `close_all_pipes`가 건너뛰게 했습니다. 덕분에 `cmd_init`은 커맨드 위치와 무관하게 완전히 동일한 방식으로 fd를 조회하고, "양 끝 커맨드만 특별 취급"하는 분기가 코드에 전혀 생기지 않습니다.
+이때 `pipe_mgr`의 파이프 배열 인덱싱(`pipes[idx][0]`/`pipes[idx+1][1]`)은 그대로 두고, 양 끝 슬롯의 "실제로 쓰이는 반쪽"만 진짜 `pipe()` 대신 `fd_factory`가 만든 fd(`create_fd_in`/`create_fd_out`)로 채워 넣었습니다. 안 쓰는 반쪽은 `-1` 센티널로 표시해 `close_all_pipes`가 건너뛰게 했습니다. 덕분에 `cmd_init`은 커맨드 위치와 무관하게 완전히 동일한 방식으로 fd를 조회하고, "양 끝 커맨드만 특별 취급"하는 분기가 코드에 전혀 생기지 않습니다.
 
 ### 3. heredoc은 임시 파일을 거친다
 
-heredoc 입력을 파이프에 실시간으로 스트리밍하면, 파이프라인의 첫 커맨드가 `ls`처럼 stdin을 안 읽고 즉시 종료하는 경우 SIGPIPE로 죽습니다 (아래 버그 항목 참고). 그래서 `get_next_line`으로 리미터까지 전부 읽어 **일반 파일**에 다 쓴 뒤, 그 파일을 다시 읽기 전용으로 열어서 `fd_in`으로 반환합니다. 일반 파일에 대한 `write()`는 읽는 쪽의 유무와 무관하게 절대 SIGPIPE가 나지 않습니다.
+heredoc 입력을 파이프에 실시간으로 스트리밍하면, 파이프라인의 첫 커맨드가 `ls`처럼 stdin을 안 읽고 즉시 종료하는 경우 SIGPIPE로 죽습니다 (아래 버그 항목 참고). 그래서 [`create_heredoc_fd_in`](src/fd_factory_heredoc_impl.c)이 `get_next_line`으로 리미터까지 전부 읽어 **일반 파일**(`/tmp/.pipex_heredoc_<pid>`)에 다 쓴 뒤, `unlink()`로 이름을 지우고 그 fd를 다시 읽기 전용으로 열어서 `fd_in`으로 반환합니다. 일반 파일에 대한 `write()`는 읽는 쪽의 유무와 무관하게 절대 SIGPIPE가 나지 않고, 열자마자 `unlink`하기 때문에 프로세스가 비정상 종료해도 디스크에 임시파일이 남지 않습니다.
 
-### 4. 에러가 나도 파이프라인은 멈추지 않는다
+### 4. 자원 준비 실패는 그 커맨드만 죽인다 (파이프라인 전체는 안 멈춘다)
 
-bash는 `< nofile cmd1 | cmd2` 같은 상황에서도 `cmd2`를 정상 실행합니다. 이를 재현하기 위해 일관된 원칙을 세웠습니다: **개별 자원 준비가 실패해도 전체 파이프라인 실행 자체를 막지 않는다.**
+핵심 멘탈모델은 "**파이프라인의 각 단계는 독립된 프로세스**"라는 유닉스 셸의 실제 구현 방식입니다. bash도 `cmd1 | cmd2 | cmd3` 전체를 하나의 단위로 실패시키지 않습니다 — 각 단계를 무조건 fork부터 하고, 그 안에서 자기 자신의 리다이렉션/입출력 설정을 시도하며, 그 설정이 실패하면 **그 자식 프로세스만** execve 없이 에러 exit으로 끝나고 나머지 단계는 완전히 독립적으로 계속 실행됩니다.
 
-- infile을 못 열면 → 에러 출력 후 `/dev/null`로 대체, 파이프라인은 계속 진행
-- outfile을 못 열면 → 에러 출력 후 `/dev/null`로 대체 (마지막 커맨드 출력만 버려짐)
-- 커맨드를 PATH에서 못 찾으면 → `cmd_init` 단계에서 파이프라인을 죽이지 않고, 그 커맨드의 `execve()`가 자식 프로세스 안에서 실패하도록 그대로 진행 (다른 커맨드는 영향 없음)
+pipex도 이 모델을 그대로 따라갑니다.
+
+- **infile을 못 열면** → `/dev/null`로 대체해서 `cmd[0]`이 빈 입력으로 정상 실행됨. infile은 파이프라인의 *처음* 이라 이 대체 여부가 최종 exit code(마지막 커맨드 기준)에 영향을 주지 않기 때문에 폴백만으로 충분함
+- **outfile을 못 열면** → 대체하지 않음. `pipe_mgr_init`은 그대로 진행하되 마지막 커맨드의 `fd_out`에 음수 fd가 담기고, [`cmd.c`의 `run_impl`](src/cmd.c)은 자식 프로세스 진입 직후 `fd_out < 0`이면 `dup2`/`execve` 없이 바로 `_exit(1)` 함. outfile은 파이프라인의 *마지막 커맨드 실행 여부*에 직접 영향을 주기 때문에 bash와 동일하게 그 커맨드를 skip시켜야 exit code가 일치함 (앞선 커맨드들은 fork되어 정상적으로 끝까지 실행됨 — `sleep 3` 같은 것도 3초를 다 채움)
+- **커맨드를 PATH에서 못 찾으면** → `cmd_init` 단계에서 파이프라인을 죽이지 않고, 그 커맨드의 `execve()`가 자식 프로세스 안에서 실패하도록 그대로 진행 (다른 커맨드는 영향 없음, exit 127)
+
+infile과 outfile을 다르게 처리하는 이유가 "구현이 비대칭적이라서"가 아니라 **파이프라인에서의 위치가 다르기 때문**이라는 점이 이 결정의 핵심입니다.
+
+### 5. fork 이후 자식의 미해제 힙은 의도적으로 정리하지 않는다
+
+`execve` 실패나 위의 `fd_out < 0` 같은 경로에서, 자식 프로세스는 부모가 만들어둔 힙(각 커맨드의 `argv`/`path`, `pipe_mgr`의 파이프 배열, `cmd_mgr`의 커맨드 배열)을 하나도 `free`하지 않고 바로 `_exit`합니다. 일부러 놔둔 겁니다.
+
+- `_exit`은 프로세스를 즉시 종료시키고 커널이 그 프로세스의 메모리를 전부 회수하므로, free를 안 해도 실제로 남는 자원은 없습니다. bash 같은 실제 셸 구현체도 실행 실패한 자식에서 malloc한 걸 일일이 정리하지 않고 그냥 죽입니다.
+- valgrind 관점에서도 이건 "definitely lost"(포인터 체인이 끊겨 다시 찾을 수 없는 진짜 누수)가 아니라 "still reachable"(종료 시점까지 포인터가 살아있었을 뿐 아무도 안 지운 것)로 분류됩니다. valgrind는 기본 옵션에서 still reachable을 에러로 세지 않고, `--errors-for-leak-kinds`에 `reachable`을 명시적으로 포함시켜야만 에러로 집계됩니다.
+- 42 `pipex` 테스터 계열은 `--errors-for-leak-kinds=all`을 강제로 켜기 때문에 이 still-reachable 블록들도 실패로 잡힙니다(`error_report.md` 5번 항목 참고). 이건 프로그램의 정확성 문제라기보다 **그 테스터가 채택한 엄격한 채점 기준**에 가깝다고 판단해 현재는 의도적으로 남겨둔 상태입니다.
 
 ## Bugs Found & Fixes
 
@@ -153,6 +165,7 @@ bash는 `< nofile cmd1 | cmd2` 같은 상황에서도 `cmd2`를 정상 실행합
 | `cmd_mgr`의 자식 프로세스 destroy가 항상 스킵됨 | `if (!&this->cmds[i])` — 배열 원소의 주소는 절대 NULL이 아니라 조건이 항상 거짓 | `if (this->cmds[i].destroy)`로 수정 (calloc 초기화로 미생성 cmd는 자연히 NULL이라 안전하게 스킵됨) |
 | `free_split(NULL)` 크래시 가능성 | `cmd_init`이 `ft_split` 단계에서 실패하면 `argv`가 NULL인 채로 destroy가 호출될 수 있음 | `free_split`에 NULL 가드 추가 |
 | outfile을 못 열면 커맨드가 하나도 안 실행됨 | `writer_init`이 `open()` 실패 시 그대로 `FAIL` 반환 → `app_init` 실패 → `app_run_impl` 자체가 호출 안 됨 | reader와 동일하게 `/dev/null` 폴백, `writer_init`은 실패시키지 않음 |
+| outfile 권한 없음(`chmod 000`) 시 exit code가 실제 bash와 다름(`0` vs `1`), valgrind 테스트(`nonexistingcommand` 등)와 별개로 실제 채점 스크립트 비교에서 발견 | 위 항목에서 도입한 `/dev/null` 폴백이 마지막 커맨드까지 그대로 실행시켜버림. 실제 bash는 마지막 커맨드의 출력 리다이렉션이 실패하면 그 커맨드 자체를 실행하지 않고 셸이 exit 1을 반환하는데, `/dev/null` 폴백은 이 실패를 완전히 숨겨서 마지막 커맨드가 정상 종료(exit 0)해버림 | `create_fd_out_impl`([src/fd_factory.c](src/fd_factory.c))에서 `/dev/null` 폴백 제거, 실패 시 음수 fd 그대로 반환. `pipe_mgr_init`은 그래도 계속 진행시키되(파이프/이전 커맨드는 정상 fork), `cmd.c`의 자식 프로세스 분기에서 `fd_out < 0`이면 `dup2`/`execve` 없이 바로 `_exit(1)`. 처음엔 `pipe_mgr_init` 자체를 실패시켜 파이프라인 시작을 통째로 막는 방식으로 고쳤었는데, 그러면 `sleep 3`처럼 outfile보다 앞선 커맨드까지 아예 fork가 안 돼서 실행 시간이 0으로 나와버리는 회귀가 생겨(테스트 #15) 지금의 "자식 개별 종료" 방식으로 다시 고침 |
 | 존재하지 않는 커맨드가 있으면 파이프라인 전체가 안 돎 | `cmd_init`이 `create_cmd_path` 실패를 그 자리에서 `FAIL`로 전파 → 다른 커맨드까지 전부 fork 전에 중단 | 경로를 못 찾아도 `cmd_init`은 성공 처리하고, `argv[0]`을 그대로 넘겨 `execve()`가 자식 프로세스 안에서 실패하도록 함(127 종료) — 다른 커맨드는 정상 진행 |
 | pipex 자신의 exit code가 항상 0 | 커맨드들의 종료 상태를 `waitpid(pid, NULL, 0)`로 버림, `main()`도 무조건 `return 0` | `cmd_mgr`에서 마지막 커맨드의 상태를 `WIFEXITED`/`WEXITSTATUS`/`WIFSIGNALED`로 계산해 보관, `main()`이 이를 반환 |
 | heredoc + `ls`(stdin 안 읽는 커맨드) 조합에서 SIGPIPE로 프로세스 죽음 (valgrind로 발견) | heredoc reader 프로세스가 사용자가 타이핑하는 동안 실시간으로 파이프에 `write()`하는데, `ls`가 stdin을 안 읽고 즉시 종료해 파이프 읽기 쪽이 닫힘. `signal()`/`sigaction()`은 pipex 허용 함수 목록에 없어 SIGPIPE를 무시할 수 없음 | heredoc을 임시 파일에 전부 수집한 뒤 그 파일을 열어 쓰는 방식으로 변경, 나아가 reader/writer의 파이프 중계 프로세스 자체를 없애고 `dup2` 직결 구조로 전환 (Key Design Decisions 3, 2번 참고) |
@@ -175,7 +188,7 @@ $ cat outfile        # 2
 | 상황 | 명령 예시 | 기대 동작 |
 |---|---|---|
 | infile 없음/권한 없음 | `./pipex nofile cmd1 cmd2 outfile` | stderr에 에러, cmd1은 EOF로 실행(빈 입력), cmd2는 정상 실행, exit code는 cmd2 기준 |
-| outfile 생성 불가 | `./pipex infile cmd1 cmd2 /no_permission/out` | stderr에 에러, 커맨드들은 정상 실행되지만 마지막 출력은 버려짐, exit code는 cmd2 기준 |
+| outfile 생성/오픈 불가 (권한 없음 등) | `./pipex infile cmd1 cmd2 /no_permission/out` | stderr에 에러, cmd1은 정상 실행되지만 **cmd2(마지막)는 실행되지 않고 exit 1** — 앞 커맨드의 실행 시간(예: `sleep 3`)은 그대로 소요됨 |
 | 중간 커맨드가 존재하지 않음 | `./pipex infile nonexistent cmd2 outfile` | `command not found`, 해당 커맨드만 exit 127, 나머지 커맨드는 정상 실행 |
 | 마지막 커맨드가 존재하지 않음 | `./pipex infile cmd1 nonexistent outfile` | `command not found`, pipex 전체 exit code가 127 |
 | 파이프라인 exit code 전파 | `./pipex infile cat false outfile` | `$?`가 bash의 `cat infile \| false`와 동일 (1) |
@@ -204,6 +217,6 @@ $ cat outfile        # 2
 
 - **설계 리뷰**: 초기 "리더 팩토리" 구조에 대해 GoF 패턴(Abstract Factory/Strategy)과의 적합성을 검토하고, 더 단순한 디스패치 테이블 구조로 리팩토링하는 과정 전반
 - **코드 작성**: `create_cmd_path`(PATH 탐색), `reader`/`writer` 모듈의 fd 준비 로직, heredoc 임시 파일 처리, `cmd_mgr`의 exit code 계산 로직 등 구현
-- **버그 헌팅 및 근본 원인 분석**: 컴파일 에러, fork 순서로 인한 파이프 fd 오사용, `double free or corruption`(스택 포인터를 `free()`한 버그), `cmd_mgr`의 죽은 코드(`if (!&this->cmds[i])`) 등을 실제 실행/valgrind 결과를 근거로 진단
-- **bash 동작 재현 검증**: 에러 상황별로 실제 `bash`와 `pipex`의 exit code·출력을 나란히 실행/비교해 명세와 구현이 일치하는지 확인
-- 최종 코드 작성과 설계 결정은 42 규칙(허용 함수 목록 등)에 맞는지 직접 검토·승인하며 진행했습니다.
+- **버그 헌팅 및 근본 원인 분석**: 컴파일 에러, fork 순서로 인한 파이프 fd 오사용, `double free or corruption`(스택 포인터를 `free()`한 버그), `cmd_mgr`의 죽은 코드(`if (!&this->cmds[i])`), outfile 권한 실패 시 exit code가 bash와 달랐던 문제(마지막 커맨드만 `_exit(1)`시키는 방식으로 수정, 첫 시도였던 "파이프라인 전체 fail-fast"는 `sleep` 등 앞선 커맨드의 실행 시간을 없애버리는 회귀를 낳아 폐기) 등을 실제 실행/valgrind 결과를 근거로 진단
+- **valgrind still-reachable vs definitely-lost 판별**: `42_pipex_tester`가 보고하는 leak 중 상당수가 `_exit` 직후 회수되는 자식 프로세스의 힙(execve 실패 경로)이나 `get_next_line`의 static 버퍼처럼 "still reachable"일 뿐 실제 누수(definitely lost)가 아님을 `--errors-for-leak-kinds` 옵션 유무를 직접 비교해 확인. 어디까지가 실제 고쳐야 할 버그이고 어디부터가 테스터의 엄격한 채점 기준인지 구분하는 데 사용
+- **bash 동작 재현 검증**: 에러 상황별로 실제 `bash`와 `pipex`의 exit code·출력·실행 시간을 나란히 실행/비교해 명세와 구현이 일치하는지 확인

@@ -26,6 +26,8 @@ static t_status	run_impl(t_cmd *this)
 		return (report_error("fork failed", ERR_SYSCALL));
 	else if (this->pid == 0)
 	{
+		if (this->fd_out < 0)
+			_exit(1);
 		dup2(this->fd_in, STDIN_FILENO);
 		close(this->fd_in);
 		dup2(this->fd_out, STDOUT_FILENO);

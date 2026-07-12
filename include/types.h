@@ -18,8 +18,6 @@ typedef struct s_parser			t_parser;
 typedef struct s_cmd			t_cmd;
 typedef struct s_cmd_mgr		t_cmd_mgr;
 typedef struct s_pipe_mgr		t_pipe_mgr;
-// typedef struct s_reader			t_reader;
-// typedef struct s_writer			t_writer;
 typedef struct s_fd_factory		t_fd_factory;
 typedef struct s_app			t_app;
 
